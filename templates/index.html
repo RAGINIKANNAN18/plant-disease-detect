@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Disease Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #2E7D32;
+            --secondary: #FFC107;
+            --secondary-dark: #FFA000;
+            --white: #ffffff;
+            --light-bg: rgba(255, 255, 255, 0.15);
+            --dark-text: #333333;
+            --light-text: #f5f5f5;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--light-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        .upload-section, .results-section {
+            background: var(--light-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .file-upload {
+            width: 100%;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 1.5rem;
+            border: 2px dashed var(--white);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .file-upload-label i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .file-upload-label span {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-label small {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-container {
+            width: 100%;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            object-fit: contain;
+            border: 2px solid var(--white);
+        }
+
+        button {
+            background: var(--secondary);
+            color: var(--dark-text);
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--secondary-dark);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--white);
+            border-top: 3px solid var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        .result-content {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .disease-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+            color: var(--white);
+        }
+
+        .confidence {
+            display: inline-block;
+            background: rgba(255, 193, 7, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .treatment {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .treatment-title {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+                width: 95%;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Plant Disease Detection</h1>
+        <p class="subtitle">Upload an image of a plant leaf to detect potential diseases and get treatment recommendations</p>
+    </div>
+
+    <div class="app-container">
+        <div class="upload-section">
+            <form id="uploadForm">
+                <div class="file-upload">
+                    <label for="fileInput" class="file-upload-label">
+                        <i class="fas fa-leaf"></i>
+                        <span>Choose a plant image</span>
+                        <small>JPG, PNG supported (max 5MB)</small>
+                    </label>
+                    <input type="file" id="fileInput" name="file" accept="image/*" required>
+                </div>
+
+                <div class="preview-container">
+                    <img id="imagePreview" alt="Preview">
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    <span>Analyze Image</span>
+                    <div class="loader" id="loading"></div>
+                </button>
+            </form>
+        </div>
+
+        <div class="results-section">
+            <h2>Analysis Results</h2>
+            
+            <div id="resultsPlaceholder" class="no-results">
+                <i class="fas fa-microscope" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Your analysis results will appear here</p>
+            </div>
+
+            <div id="resultsContainer" style="display: none;">
+                <div class="result-card">
+                    <div class="result-title">Detected Disease</div>
+                    <div class="result-content">
+                        <div class="disease-name" id="diseaseName">Healthy</div>
+                        <div class="confidence" id="confidenceLevel">Confidence: 95%</div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">Plant Information</div>
+                    <div class="result-content">
+                        <div><strong>Plant Type:</strong> <span id="plantType">Tomato</span></div>
+                        <div><strong>Affected Area:</strong> <span id="affectedArea">Leaves</span></div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">Recommended Treatment</div>
+                    <div class="result-content treatment">
+                        <div class="treatment-title" id="treatmentTitle">Preventive Measures:</div>
+                        <div id="treatmentDescription">The plant appears healthy. Maintain current care practices including proper watering and sunlight.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileInput');
+            const previewContainer = document.querySelector('.preview-container');
+            const imagePreview = document.getElementById('imagePreview');
+            const uploadForm = document.getElementById('uploadForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const resultsPlaceholder = document.getElementById('resultsPlaceholder');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            // Disease name and treatment data (mock - in real app this would come from your API)
+            const diseaseData = {
+                "healthy": {
+                    name: "Healthy Plant",
+                    confidence: "95%",
+                    plantType: "Tomato",
+                    affectedArea: "None",
+                    treatmentTitle: "Preventive Measures",
+                    treatment: "The plant appears healthy. Maintain current care practices including proper watering and sunlight."
+                },
+                "early_blight": {
+                    name: "Early Blight",
+                    confidence: "89%",
+                    plantType: "Tomato",
+                    affectedArea: "Leaves",
+                    treatmentTitle: "Recommended Treatment",
+                    treatment: "1. Remove affected leaves. 2. Apply copper-based fungicides. 3. Improve air circulation. 4. Avoid overhead watering. 5. Rotate crops next season."
+                },
+                "late_blight": {
+                    name: "Late Blight",
+                    confidence: "92%",
+                    plantType: "Tomato",
+                    affectedArea: "Leaves and stems",
+                    treatmentTitle: "Urgent Treatment Needed",
+                    treatment: "1. Remove and destroy affected plants. 2. Apply chlorothalonil or mancozeb fungicides. 3. Ensure proper spacing. 4. Water at the base only. 5. Use resistant varieties next season."
+                }
+            };
+
+            // Preview uploaded image
+            fileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Form submission
+            uploadForm.onsubmit = async function(event) {
+                event.preventDefault();
+                
+                // Show loading state
+                submitBtn.disabled = true;
+                loading.style.display = 'block';
+                submitBtn.querySelector('span').textContent = 'Analyzing...';
+                
+                // In a real app, you would send the image to your API here
+                // For demo purposes, we'll simulate an API response after a delay
+                setTimeout(() => {
+                    // Hide loading state
+                    submitBtn.disabled = false;
+                    loading.style.display = 'none';
+                    submitBtn.querySelector('span').textContent = 'Analyze Image';
+                    
+                    // Simulate getting a random result for demo
+                    const diseases = Object.keys(diseaseData);
+                    const randomDisease = diseases[Math.floor(Math.random() * diseases.length)];
+                    const result = diseaseData[randomDisease];
+                    
+                    // Display results
+                    displayResults(result);
+                    
+                    // In a real app, you would use:
+                    // const formData = new FormData(this);
+                    // const response = await fetch("/predict", {
+                    //     method: "POST",
+                    //     body: formData
+                    // });
+                    // const result = await response.json();
+                    // displayResults(result);
+                }, 2000);
+            };
+
+            function displayResults(result) {
+                // Hide placeholder and show results
+                resultsPlaceholder.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                
+                // Update result fields
+                document.getElementById('diseaseName').textContent = result.name;
+                document.getElementById('confidenceLevel').textContent = `Confidence: ${result.confidence}`;
+                document.getElementById('plantType').textContent = result.plantType;
+                document.getElementById('affectedArea').textContent = result.affectedArea;
+                document.getElementById('treatmentTitle').textContent = result.treatmentTitle;
+                document.getElementById('treatmentDescription').textContent = result.treatment;
+            }
+        });
+    </script>
+</body>
+</html>
